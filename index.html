@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Campus Navigation System · Acropolis College</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--sky:#2fa8f0;--sky-d:#0b6fb3;--sun:#ffc21a;--ink:#0f2740;--mut:#5a7088;--bg:#e4f4ff;--panel:#fff;--line:#d3e6f4;--chip:#eaf6ff}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e6f2ff;--mut:#9bb3ca;--bg:#0a1827;--panel:#10263b;--line:#234360;--chip:#17324b}}
+:root[data-theme="dark"]{--ink:#e6f2ff;--mut:#9bb3ca;--bg:#0a1827;--panel:#10263b;--line:#234360;--chip:#17324b}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 Outfit,system-ui,sans-serif}
+.app{display:grid;grid-template-columns:390px 1fr;height:100%}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow:auto;display:flex;flex-direction:column}
+.hd{padding:20px 20px 16px;background:linear-gradient(160deg,#1c93e0,#5cc4ff 70%,#ffd84d 150%);color:#fff}
+.hd small{display:inline-block;background:rgba(255,255,255,.22);padding:2px 10px;border-radius:99px;font-weight:600;font-size:12px}
+.hd h1{margin:8px 0 2px;font-size:22px;line-height:1.15;letter-spacing:.02em;font-weight:700}
+.hd p{margin:0;opacity:.95}
+.bd{padding:16px 20px 24px;display:flex;flex-direction:column;gap:14px}
+.srch{display:flex;gap:8px}
+input,select{font:inherit;color:var(--ink);background:var(--chip);border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;min-width:0}
+input{flex:1}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--sun);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px}
+.go{background:var(--sun);color:#3a2a00;font-weight:700;padding:0 18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{background:var(--chip);color:var(--sky-d);border:1px solid var(--line);padding:5px 11px;border-radius:99px;font-size:13px}
+.chips button:hover{border-color:var(--sky)}
+.row{display:flex;gap:8px;align-items:center}
+.row select{flex:1}
+.here{background:var(--chip);color:var(--ink);border:1.5px solid var(--line);padding:10px 12px;white-space:nowrap}
+.here.on{background:var(--sky);color:#fff;border-color:var(--sky)}
+.tg{display:flex;gap:10px;align-items:center;font-weight:500}
+.tg input{flex:none;width:18px;height:18px;accent-color:var(--sky)}
+h3{margin:0 0 6px;font-size:13px;color:var(--mut);font-weight:600}
+.card{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--chip)}
+.card h2{margin:0 0 2px;font-size:18px}
+.stats{display:flex;gap:8px;margin:10px 0}
+.stats div{flex:1;background:var(--panel);border-radius:12px;padding:8px 10px;border:1px solid var(--line)}
+.stats b{display:block;font-size:19px;color:var(--sky-d)}
+.stats span{font-size:12px;color:var(--mut)}
+ol{margin:6px 0 0;padding-left:20px}ol li{margin:5px 0}
+.via{color:var(--mut);font-size:13px;margin:4px 0}
+.msg{color:var(--mut)}.err{color:#c0392b;font-weight:600}
+main{padding:14px;min-height:0;display:flex;flex-direction:column;gap:10px}
+.mapwrap{flex:1;min-height:0;border-radius:20px;overflow:hidden;border:2px solid var(--line);background:linear-gradient(#aee0ff,#d9f1ff);position:relative}
+svg#map{width:100%;height:100%;display:block}
+svg text{font-family:Outfit,system-ui,sans-serif;pointer-events:none}
+.bl{cursor:pointer;transition:filter .15s}.bl:hover{filter:brightness(1.08)}
+.bl.on rect,.bl.on ellipse{stroke:#d92b2b;stroke-width:3.5}
+.route{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.flow{stroke-dasharray:2 16;animation:fl 1s linear infinite}
+@keyframes fl{to{stroke-dashoffset:-36}}
+@media(prefers-reduced-motion:reduce){.flow{animation:none}}
+.poi{cursor:pointer}.poi:hover circle{r:11}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--mut);padding:0 4px}
+.legend i{display:inline-block;vertical-align:middle;margin-right:5px}
+@media(max-width:860px){body{height:auto}html{height:auto}.app{grid-template-columns:1fr;height:auto}aside{border:0}main{padding:10px}.mapwrap{height:62vw;min-height:300px;flex:none}}
+</style></head><body>
+<div class="app">
+<aside>
+<div class="hd"><small>Acropolis College</small><h1>CAMPUS NAVIGATION SYSTEM</h1><p>Every path on campus, one tap away.</p></div>
+<div class="bd">
+<form class="srch" id="sf"><input id="q" placeholder="Try “Where is the AI Lab?”" autocomplete="off" aria-label="Search"><button class="go">Go</button></form>
+<div class="chips" id="demo"></div>
+<div class="row"><select id="from" aria-label="Starting point"></select><button class="here" id="here" type="button">📍 I'm here</button></div>
+<label class="tg"><input type="checkbox" id="acc"> ♿ Accessible route (avoid stairs)</label>
+<div id="rec"></div>
+<div id="res" class="card"><span class="msg">Search a place, or tap any building on the map to get the shortest walking route from your location.</span></div>
+</div></aside>
+<main><div class="mapwrap"><svg id="map" viewBox="0 0 1400 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Acropolis College campus map"></svg></div>
+<div class="legend">
+<span><i style="width:22px;height:8px;background:#7d8b9a;border-radius:4px"></i>Road</span>
+<span><i style="width:22px;height:4px;background:#e8d29a"></i>Footpath</span>
+<span><i style="width:12px;height:12px;background:#ffd54a;border-radius:3px"></i>Building</span>
+<span><i style="width:12px;height:12px;background:#a8e08a;border-radius:3px"></i>Garden</span>
+<span><i style="width:12px;height:12px;background:#3fa34d;border-radius:50%"></i>Tree</span>
+<span><i style="width:0;height:0;border:6px solid transparent;border-bottom:12px solid #1f7a3a;border-top:0"></i>Forest (pine)</span>
+<span><i style="width:22px;height:6px;background:#ffc21a;border:1px solid #b27a00;border-radius:4px"></i>Your route</span>
+<span>🚻 Washroom · 💻 Lab · ♿ Lift · 🏢 Office</span></div>
+</main></div>
+<script>
+// ---------- Campus graph (1 px = 0.5 m) ----------
+// [id,name,x,y,type,aliases,description]
+const D=[
+['gate','Main Gate',45,350,'gate','main gate entrance gate college gate','Main entrance of Acropolis College.'],
+['jA','West Junction',130,350,'j'],['jB','Sports Road Junction',250,350,'j'],['jC','Management Junction',340,350,'j'],
+['jD','Canteen Junction',475,350,'j'],['jE','Bus Road Junction',545,350,'j'],['jF','B.Tech Road',680,350,'j'],
+['jT','B.Tech Institute Entrance',740,350,'j'],['jH1','Block 1 Road',820,350,'j'],['jH2','Block 2 Road',960,350,'j'],
+['jS1','AITR Canteen Road',1065,350,'j'],['jH3','Block 3 Road',1100,350,'j'],['jS2','Stationery Road',1175,350,'j'],['jE2','East Junction',1240,350,'j'],
+['jP','Sports Path',250,200,'j'],
+['east','Rest of Campus (east)',1340,350,'gate','east rest campus more campus','Road continues to the rest of the college.'],
+['aud','Auditorium-1',130,332,'hall','auditorium audi auditorium-1 big hall seminar','The larger auditorium for events and seminars.'],
+['play','Football Playground',235,100,'sports','football playground ground field sports','Football ground of the main sports complex.'],
+['mgmt','Management Building',340,330,'office','management building management mba','Management department block.'],
+['admin','Admin Office',370,262,'office','admin office administration office fees','Admissions, fees and administrative office.'],
+['wc1','Washroom (Management)',298,245,'wc','washroom toilet restroom bathroom wc management washroom','Washroom inside the Management Building.'],
+['canteen','Canteen',475,328,'food','canteen cafeteria food mess','Main college canteen beside Management.'],
+['bus','Bus Parking Lot',610,325,'park','bus parking bus stand parking lot buses','Separated from Management by the road.'],
+['lib','Central Library',340,385,'lib','central library library books reading','Silent reading hall and reference section.'],
+['wc2','Washroom (Library)',440,385,'wc','washroom toilet restroom bathroom wc library washroom','Washroom between Library and Central Hall.'],
+['hall','Central Hall',525,385,'hall','central hall hall conference','Central hall for large gatherings.'],
+['b1','Block 1',820,228,'block','block 1 first block block1','First block of B.Tech Institute (westernmost).'],
+['dir','Director Office',790,170,'office','director office director principal','Office of the Director, Block 1.'],
+['g1','Garden (Block 1)',820,290,'garden','garden block 1 garden','Garden in front of Block 1.'],
+['b2','Block 2',960,228,'block','block 2 second block block2','Second block of B.Tech Institute.'],
+['ds','DS Lab',930,170,'lab','ds lab data structures lab data structure cse lab','Data Structures lab, Block 2 (ground floor).'],
+['wc3','Washroom (Block 2)',992,170,'wc','washroom toilet restroom bathroom wc block 2 washroom','Washroom in Block 2.'],
+['g2','Garden (Block 2)',960,290,'garden','garden block 2 garden','Garden in front of Block 2.'],
+['b3','Block 3',1100,228,'block','block 3 third block block3','Third block of B.Tech Institute.'],
+['ai','AI Lab',1068,170,'lab','ai lab artificial intelligence lab aiml lab aiml ai ml machine learning lab','AI/ML lab on Block 3 first floor. Stairs and lift access.'],
+['lift','Lift (Block 3)',1132,200,'lift','lift elevator ramp','Accessible lift to the AI Lab floor.'],
+['g3','CDC Garden',1100,290,'garden','cdc garden cdc garden block 3 garden','CDC Garden, in front of Block 3.'],
+['ac','AITR Canteen',1065,380,'food','aitr canteen institute canteen aitr cafe','Canteen of AITR, south of the blocks across the road.'],
+['st','Stationery',1175,380,'shop','stationery shop xerox print photocopy','Stationery, printing and photocopy.'],
+['basket','Basketball Court',1240,235,'sports','basketball court basketball','East of the blocks.'],
+['sportsC','Sports Complex',1240,105,'sports','sports complex indoor stadium gym','Sports complex north of the basketball court.']
+];
+const E=[['gate','jA'],['jA','jB'],['jB','jC'],['jC','jD'],['jD','jE'],['jE','jF'],['jF','jT'],['jT','jH1'],['jH1','jH2'],['jH2','jS1'],['jS1','jH3'],['jH3','jS2'],['jS2','jE2'],['jE2','east'],
+['jA','aud'],['jB','jP'],['jP','play'],['play','aud'],['jC','mgmt'],['mgmt','admin'],['mgmt','wc1'],['jD','canteen'],['mgmt','canteen'],['jE','bus'],['bus','jF'],
+['jC','lib'],['lib','wc2'],['wc2','hall'],['jD','hall'],['jH1','g1'],['g1','b1'],['b1','dir'],['jH2','g2'],['g2','b2'],['b2','ds'],['b2','wc3'],['jH3','g3'],['g3','b3'],
+['b3','ai','s'],['b3','lift'],['lift','ai','l'],['g1','g2'],['g2','g3'],['b1','b2'],['b2','b3'],['jS1','ac'],['jS2','st'],['jE2','basket'],['basket','sportsC']];
+const R=[ // x,y,w,h,label,fill,node,kind
+[30,15,200,150,'Football Playground','#86d46f','play','field'],[40,215,180,110,'Auditorium-1','#ffd54a','aud'],
+[270,215,140,110,'Management Building','#ffb74d','mgmt'],[430,235,90,90,'Canteen','#ff9a76','canteen'],
+[565,215,130,110,'Bus Parking Lot','#b6c4cf','bus','park'],[760,110,120,115,'Block 1','#ffe082','b1'],[900,110,120,115,'Block 2','#ffe082','b2'],
+[1040,110,120,115,'Block 3','#ffe082','b3'],[1190,125,120,100,'Basketball Court','#ffa270','basket','court'],[1190,15,120,95,'Sports Complex','#86d46f','sportsC','field'],
+[1010,380,110,60,'AITR Canteen','#ff9a76','ac'],[1130,380,90,60,'Stationery','#f4b6dc','st'],[270,385,140,70,'Central Library','#a9b3e8','lib'],[470,385,110,70,'Central Hall','#d7b8f0','hall']];
+const GARD=[['g1',775,248],['g2',915,248],['g3',1055,248]];
+const N={},adj={};
+D.forEach(d=>{N[d[0]]={id:d[0],name:d[1],x:d[2],y:d[3],type:d[4],al:[],raw:d[5]||'',desc:d[6]||''};adj[d[0]]=[]});
+E.forEach(([a,b,o])=>{const w=Math.round(Math.hypot(N[a].x-N[b].x,N[a].y-N[b].y)*.5)+(o==='l'?14:0);
+ adj[a].push({to:b,w,s:o==='s',l:o==='l'});adj[b].push({to:a,w,s:o==='s',l:o==='l'})});
+// Aliases: written as space-separated phrases listed by a fixed list for reliable matching
+const AL={gate:['main gate','entrance','college gate','gate'],east:['rest of campus','east campus','more campus'],aud:['auditorium','auditorium 1','audi','seminar hall'],
+play:['football playground','football ground','playground','football','sports ground'],mgmt:['management building','management','mba'],admin:['admin office','administration','fees office','admin'],
+wc1:['washroom','toilet','restroom','bathroom','wc','management washroom'],wc2:['washroom','toilet','restroom','bathroom','wc','library washroom'],wc3:['washroom','toilet','restroom','bathroom','wc','block 2 washroom'],
+canteen:['canteen','cafeteria','food','mess'],bus:['bus parking','parking','bus stand','buses'],lib:['central library','library','books'],hall:['central hall','conference hall'],
+b1:['block 1','first block','block1'],dir:['director office','director','principal office'],g1:['block 1 garden','garden 1'],b2:['block 2','second block','block2'],ds:['ds lab','data structures lab','data structure lab','dsa lab'],
+g2:['block 2 garden','garden 2'],b3:['block 3','third block','block3'],ai:['ai lab','aiml lab','ai ml lab','artificial intelligence lab','machine learning lab','aiml'],lift:['lift','elevator'],
+g3:['cdc garden','cdc'],ac:['aitr canteen','institute canteen','aitr cafe'],st:['stationery','xerox','photocopy','print shop'],basket:['basketball court','basketball'],sportsC:['sports complex','indoor stadium','gym']};
+Object.keys(AL).forEach(k=>N[k].al=AL[k]);
+const POI=Object.values(N).filter(n=>n.al.length);
+// ---------- Dijkstra with binary min-heap: O((V+E) log V) ----------
+class Heap{constructor(){this.a=[]}get n(){return this.a.length}
+push(k,v){const a=this.a;a.push([k,v]);let i=a.length-1;while(i>0){const p=(i-1)>>1;if(a[p][0]<=a[i][0])break;[a[p],a[i]]=[a[i],a[p]];i=p}}
+pop(){const a=this.a,t=a[0],l=a.pop();if(a.length){a[0]=l;let i=0;for(;;){let c=2*i+1;if(c>=a.length)break;if(c+1<a.length&&a[c+1][0]<a[c][0])c++;if(a[i][0]<=a[c][0])break;[a[i],a[c]]=[a[c],a[i]];i=c}}return t}}
+function dijkstra(src,acc){const dist={},prev={};for(const k in N)dist[k]=Infinity;dist[src]=0;const h=new Heap();h.push(0,src);
+ while(h.n){const[d,u]=h.pop();if(d>dist[u])continue;for(const e of adj[u]){if(acc&&e.s)continue;const nd=d+e.w;if(nd<dist[e.to]){dist[e.to]=nd;prev[e.to]=u;h.push(nd,e.to)}}}return{dist,prev}}
+function pathTo(prev,src,t){const p=[t];while(p[0]!==src){if(!prev[p[0]])return null;p.unshift(prev[p[0]])}return p}
+// ---------- Natural-language layer ----------
+const SW=new Set('where is the a an to from way route reach find me how do i get go navigate directions nearest closest near show take location of in at please what and my can you tell are which'.split(' '));
+const toks=s=>s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(t=>t&&!SW.has(t));
+function lev(a,b){const m=[...Array(a.length+1)].map((_,i)=>[i]);for(let j=1;j<=b.length;j++)m[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return m[a.length][b.length]}
+const tm=(a,b)=>a===b||(a.length>3&&b.length>3&&lev(a,b)<=1);
+function resolve(text,near){const q=toks(text);if(!q.length)return null;const sc=[];
+ for(const n of POI){let best=0;for(const ph of n.al){const pt=ph.split(' ');const hit=pt.filter(p=>q.some(t=>tm(t,p))).length;
+  const s=hit/pt.length*(hit/q.length*.4+.6);if(s>best)best=s}sc.push([n,best])}
+ const top=Math.max(...sc.map(x=>x[1]));if(top<.55)return null;
+ return sc.filter(x=>x[1]>=(near?.45:top-.01)).map(x=>x[0].id)}
+function parse(q,from,acc){const near=/nearest|closest|near/i.test(q);let src=from,dst=null,m;
+ if((m=q.match(/from (.+?) to (.+)/i))){const a=resolve(m[1]);if(a)src=a[0];dst=resolve(m[2],near)}
+ else if((m=q.match(/(.+?) from (.+)/i))&&resolve(m[2])){src=resolve(m[2])[0];dst=resolve(m[1],near)}
+ else if((m=q.match(/^(.+?) to (.+)$/i))&&resolve(m[1])&&resolve(m[2])){src=resolve(m[1])[0];dst=resolve(m[2],near)}
+ else dst=resolve(q,near);
+ if(!dst)return null;const{dist}=dijkstra(src,acc);dst=dst.filter(d=>d!==src).sort((a,b)=>dist[a]-dist[b]);
+ return dst.length?{src,dst:dst[0],amb:dst.length>1}:null}
+// ---------- Directions ----------
+const cd=(a,b)=>['east','north-east','north','north-west','west','south-west','south','south-east'][(Math.round(Math.atan2(a.y-b.y,b.x-a.x)*4/Math.PI)+8)%8];
+const ed=(a,b)=>adj[a].find(e=>e.to===b);
+function steps(p){const out=[];let i=0;while(i<p.length-1){let j=i+1,e=ed(p[i],p[j]),d=e.w;const dir=cd(N[p[i]],N[p[j]]),via=[];
+ while(j<p.length-1&&N[p[j]].type==='j'&&cd(N[p[j]],N[p[j+1]])===dir&&!e.s&&!e.l){const e2=ed(p[j],p[j+1]);if(e2.s||e2.l)break;via.push(N[p[j]].name);d+=e2.w;j++}
+ const end=N[p[j]];out.push(`${i?'Continue':'Head'} ${dir} for ${d} m${via.length?' (past '+via.join(', ')+')':''} to <b>${end.name}</b>${e.s?' — take the stairs':''}${e.l?' — use the lift':''}.`);i=j}return out}
+// ---------- Map rendering ----------
+const $=id=>document.getElementById(id),svg=$('map');
+const rnd=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(42);
+const inRect=(x,y,m)=>R.some(r=>x>r[0]-m&&x<r[0]+r[2]+m&&y>r[1]-m&&y<r[1]+r[3]+m)||GARD.some(g=>x>g[1]-10&&x<g[1]+110&&y>g[2]-10&&y<g[2]+80);
+const roadNear=(x,y)=>Math.abs(y-350)<24||(Math.abs(x-250)<22&&y>190&&y<360)||(Math.abs(x-1240)<22&&y>90&&y<360);
+function trees(){let pine='',rd='';const zone=(x0,y0,x1,y1,n,pineKind)=>{let c=0,t=0;while(c<n&&t<n*30){t++;const x=x0+rnd()*(x1-x0),y=y0+rnd()*(y1-y0);if(inRect(x,y,14)||roadNear(x,y))continue;c++;
+ if(pineKind){const r=9+rnd()*6;pine+=`<path d="M${x} ${y-r*1.5}L${x+r*.75} ${y+r*.6}L${x-r*.75} ${y+r*.6}Z"/><rect x="${x-1.5}" y="${y+r*.6}" width="3" height="5" fill="#6b4a2b"/>`}
+ else rd+=`<circle cx="${x}" cy="${y}" r="${7+rnd()*4}"/>`}};
+ zone(260,10,740,195,55,true);zone(10,480,1390,595,110,true);zone(1330,380,1395,470,10,false);zone(570,385,740,470,16,false);zone(10,385,260,470,14,false);zone(1190,250,1330,330,12,false);
+ return `<g fill="#1f7a3a" stroke="#14572a" stroke-width=".8">${pine}</g><g fill="#43b055" stroke="#2a8a3b" stroke-width=".8">${rd}</g>`}
+function draw(){let s=`<defs><pattern id="gr" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#c9eca8"/><circle cx="3" cy="4" r="1" fill="#b8e293"/><circle cx="10" cy="10" r="1" fill="#b8e293"/></pattern></defs>
+<rect width="1400" height="600" fill="url(#gr)"/><circle cx="1365" cy="30" r="0" fill="#ffc21a"/>`;
+ // roads
+ const seen=new Set(),roads=[],paths=[];E.forEach(([a,b,o])=>{const A=N[a],B=N[b],isR=(A.type==='j'||A.type==='gate')&&(B.type==='j'||B.type==='gate');
+  const l=`<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}"`;(isR?roads:paths).push(l+(o==='s'?' stroke-dasharray="4 5"':'')+'/>')});
+ s+=`<g stroke="#e8d29a" stroke-width="6" stroke-linecap="round">${paths.join('')}</g><g stroke="#6f7d8c" stroke-width="20" stroke-linecap="round">${roads.join('')}</g><g stroke="#fff" stroke-width="2" stroke-dasharray="10 10" opacity=".85">${roads.join('')}</g>`;
+ // gardens
+ GARD.forEach(g=>{s+=`<g class="bl" data-n="${g[0]}"><rect x="${g[1]}" y="${g[2]}" width="90" height="66" rx="14" fill="#a8e08a" stroke="#6fba58" stroke-width="2"/>`;
+  for(let i=0;i<9;i++)s+=`<circle cx="${g[1]+14+(i%5)*16}" cy="${g[2]+44+(i<5?0:12)*(i%2?-1:1)}" r="3" fill="${i%2?'#ffc21a':'#ff8fb0'}"/>`;
+  s+=`<circle cx="${g[1]+45}" cy="${g[2]+24}" r="12" fill="#43b055" stroke="#2a8a3b" stroke-width="1.5"/><text x="${g[1]+45}" y="${g[2]+62}" font-size="11.5" font-weight="600" fill="#1d5a2c" text-anchor="middle">${g[0]==='g3'?'CDC Garden':'Garden'}</text></g>`});
+ s+=trees();
+ // buildings
+ R.forEach(r=>{const[x,y,w,h,l,f,n,k]=r;s+=`<g class="bl" data-n="${n}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${k==='field'?18:10}" fill="${f}" stroke="#00000030" stroke-width="2"/>`;
+  if(k==='field')s+=`<rect x="${x+12}" y="${y+12}" width="${w-24}" height="${h-24}" rx="8" fill="none" stroke="#fff" stroke-width="2"/><line x1="${x+w/2}" y1="${y+12}" x2="${x+w/2}" y2="${y+h-12}" stroke="#fff" stroke-width="2"/><circle cx="${x+w/2}" cy="${y+h/2}" r="16" fill="none" stroke="#fff" stroke-width="2"/>`;
+  if(k==='court')s+=`<rect x="${x+14}" y="${y+14}" width="${w-28}" height="${h-28}" fill="none" stroke="#fff" stroke-width="2"/><circle cx="${x+w/2}" cy="${y+h/2}" r="14" fill="none" stroke="#fff" stroke-width="2"/>`;
+  if(k==='park')for(let i=0;i<5;i++)s+=`<rect x="${x+12+i*22}" y="${y+h-34}" width="14" height="24" rx="3" fill="#ffc21a" stroke="#8a6a00"/>`;
+  if(!k&&/Block/.test(l))s+=`<rect x="${x+10}" y="${y+10}" width="${w-20}" height="14" rx="3" fill="#fff8" />`;
+  const lines=l.split(' ').length>2?[l.split(' ').slice(0,2).join(' '),l.split(' ').slice(2).join(' ')]:[l];
+  const ty=y+h-(k==='park'?44:k==='court'||k==='field'?h/2-4:h/2)-(lines.length-1)*7;
+  lines.forEach((t,i)=>s+=`<text x="${x+w/2}" y="${ty+i*15+(k||/Block/.test(l)?0:0)}" font-size="${k==='field'||k==='court'?13:14}" font-weight="700" fill="#102a43" text-anchor="middle">${t}</text>`);s+='</g>'});
+ s+='<g id="rt"></g>';
+ // POIs
+ const ic={wc:'🚻',lab:'💻',office:'🏢',lift:'♿'};
+ Object.values(N).forEach(n=>{if(ic[n.type]&&!R.some(r=>r[6]===n.id))s+=`<g class="poi" data-n="${n.id}"><circle cx="${n.x}" cy="${n.y}" r="9" fill="#fff" stroke="#0b6fb3" stroke-width="2"/><text x="${n.x}" y="${n.y+4}" font-size="11" text-anchor="middle">${ic[n.type]}</text><text x="${n.x}" y="${n.y+23}" font-size="10.5" font-weight="600" fill="#102a43" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke">${n.name.replace(/ \(.*/,'')}${n.type==='wc'?' WC':''}</text><title>${n.name}</title></g>`});
+ s+=`<g id="me"></g><g stroke="none"><text x="22" y="400" font-size="12" font-weight="700" fill="#fff" stroke="#3a5166" stroke-width="3" paint-order="stroke">◀ MAIN ROAD</text><text x="1285" y="372" font-size="12" font-weight="700" fill="#fff" stroke="#3a5166" stroke-width="3" paint-order="stroke">TO CAMPUS ▶</text>
+ <text x="365" y="130" font-size="13" font-weight="700" fill="#e6ffe9" stroke="#1f5a30" stroke-width="3" paint-order="stroke" text-anchor="middle">🌲 Forest</text><text x="700" y="548" font-size="13" font-weight="700" fill="#e6ffe9" stroke="#1f5a30" stroke-width="3" paint-order="stroke" text-anchor="middle">🌲 Southern Forest</text>
+ <text x="715" y="200" font-size="11" font-weight="700" fill="#fff" stroke="#3a5166" stroke-width="3" paint-order="stroke" text-anchor="middle">B.TECH INSTITUTE (AITR) ▶</text></g>`;
+ svg.innerHTML=s}
+// ---------- App state & UI ----------
+const S={from:'gate',to:null,acc:false,pick:false};
+const store={get(){try{return JSON.parse(localStorage.getItem('cnsRecent')||'[]')}catch(e){return[]}},set(v){try{localStorage.setItem('cnsRecent',JSON.stringify(v))}catch(e){}}};
+function mark(){svg.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));if(S.to)svg.querySelectorAll(`[data-n="${S.to}"]`).forEach(e=>e.classList.add('on'));
+ const f=N[S.from];$('me').innerHTML=`<circle cx="${f.x}" cy="${f.y}" r="16" fill="#2fa8f0" opacity=".3"><animate attributeName="r" values="10;22;10" dur="2s" repeatCount="indefinite"/></circle><circle cx="${f.x}" cy="${f.y}" r="8" fill="#2fa8f0" stroke="#fff" stroke-width="3"/>`}
+function render(){mark();const rt=$('rt'),res=$('res');rt.innerHTML='';if(!S.to){return}
+ if(S.to===S.from){res.innerHTML=`<h2>${N[S.to].name}</h2><p class="msg">You are already here. ${N[S.to].desc}</p>`;return}
+ const{dist,prev}=dijkstra(S.from,S.acc),t=S.to,p=dist[t]<Infinity?pathTo(prev,S.from,t):null;
+ if(!p){res.innerHTML=`<h2>${N[t].name}</h2><p class="err">No step-free route found.</p><p class="msg">Turn off “Accessible route” to see the route that uses stairs.</p>`;return}
+ const pts=p.map(i=>`${N[i].x},${N[i].y}`).join(' ');
+ rt.innerHTML=`<polyline class="route" points="${pts}" stroke="#7a4b00" stroke-width="12" opacity=".55"/><polyline class="route" points="${pts}" stroke="#ffc21a" stroke-width="8"/><polyline class="route flow" points="${pts}" stroke="#fff" stroke-width="3"/>`+
+  p.slice(1,-1).filter(i=>N[i].type!=='j').map(i=>`<circle cx="${N[i].x}" cy="${N[i].y}" r="5" fill="#fff" stroke="#7a4b00" stroke-width="2"/>`).join('')+
+  `<g transform="translate(${N[t].x} ${N[t].y})"><path d="M0 0C-14-16-14-30 0-30S14-16 0 0Z" transform="translate(0 -6)" fill="#e53935" stroke="#fff" stroke-width="2.5"/><circle cy="-30" r="4.5" fill="#fff"/></g>`;
+ const named=p.slice(1,-1).filter(i=>N[i].type!=='j').map(i=>N[i].name),jn=p.slice(1,-1).filter(i=>N[i].type==='j').length,m=dist[t],min=Math.max(1,Math.round(m/(S.acc?60:75)));
+ res.innerHTML=`<h2>${N[t].name}</h2><div class="msg">${N[t].desc}</div><div class="stats"><div><b>${m} m</b><span>distance</span></div><div><b>${min} min</b><span>walking</span></div><div><b>${p.length}</b><span>nodes</span></div></div>
+ <div class="via"><b>From:</b> ${N[S.from].name}${S.acc?' · ♿ step-free':''}</div>${named.length?`<div class="via"><b>Passing:</b> ${named.join(' → ')}</div>`:''}<div class="via">${jn} road junction${jn===1?'':'s'} on the way</div><h3>Directions</h3><ol>${steps(p).join('')}<li>You have arrived at <b>${N[t].name}</b>.</li></ol>`}
+function recents(){const r=store.get();$('rec').innerHTML=r.length?`<h3>Recent searches</h3><div class="chips">${r.map(x=>`<button type="button" data-q="${x.replace(/"/g,'&quot;')}">🕘 ${x}</button>`).join('')}</div>`:''}
+function search(q){q=q.trim();if(!q)return;const r=parse(q,S.from,S.acc);if(!r){$('res').innerHTML=`<p class="err">No matching place found for “${q.replace(/</g,'&lt;')}”.</p><p class="msg">Try a place name like “library”, “AI Lab”, “CDC Garden” or “nearest washroom”.</p>`;S.to=null;$('rt').innerHTML='';mark();return}
+ S.from=r.src;S.to=r.dst;$('from').value=S.from;const h=[q,...store.get().filter(x=>x!==q)].slice(0,5);store.set(h);recents();render()}
+function init(){draw();
+ $('from').innerHTML=POI.map(n=>`<option value="${n.id}">${n.name}</option>`).join('');$('from').value=S.from;
+ const demos=['Where is the AI Lab?','DS Lab from Main Gate','Nearest washroom','CDC Garden','Stationery from Block 1','Auditorium to Basketball Court','Central Library'];
+ $('demo').innerHTML=demos.map(d=>`<button type="button" data-q="${d}">${d}</button>`).join('');
+ document.body.addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(b){$('q').value=b.dataset.q;search(b.dataset.q)}});
+ $('sf').onsubmit=e=>{e.preventDefault();search($('q').value)};
+ $('from').onchange=e=>{S.from=e.target.value;render()};
+ $('acc').onchange=e=>{S.acc=e.target.checked;render()};
+ $('here').onclick=()=>{S.pick=!S.pick;$('here').classList.toggle('on',S.pick);$('here').textContent=S.pick?'Tap map…':"📍 I'm here"};
+ svg.addEventListener('click',e=>{const g=e.target.closest('[data-n]');if(!g)return;const id=g.dataset.n;
+  if(S.pick){S.from=id;$('from').value=id;S.pick=false;$('here').classList.remove('on');$('here').textContent="📍 I'm here"}else{S.to=id}render()});
+ recents();mark()}
+init();
+</script></body></html>
